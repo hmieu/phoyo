@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Little Film Booth — Little Film Booth</title>
+<style>
+:root{
+  --bg:#fff7fb; --card:#fffdfd; --text:#4b3045; --sub:#876f82; --line:#efd9e8;
+  --pink:#e99abd; --accent:#d983ad; --shadow:0 14px 35px rgba(174,116,151,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#211a25; --card:#2b2230; --text:#f9eaf4; --sub:#c4aabd; --line:#493747;
+  --pink:#eaa2c5; --accent:#efa8c8; --shadow:0 16px 38px rgba(0,0,0,.28); }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Trebuchet MS","Segoe UI",Arial,sans-serif;
+  padding:env(safe-area-inset-top,0) 18px env(safe-area-inset-bottom,0)}
+.wrap{max-width:420px;margin:0 auto;padding:40px 0}
+h1{font-size:20px;margin:0 0 4px}
+p.sub{color:var(--sub);font-size:13px;margin:0 0 20px}
+
+.project{background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:15px;box-shadow:var(--shadow)}
+
+.camera{background:#ead8c6;padding:10px;border-radius:12px;color:#4b3326}
+.camera video,.camera canvas{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;
+  background:#5d493b;display:block}
+.camera canvas{display:none}
+.camera-controls{display:flex;gap:7px;margin-top:9px}
+.camera-btn{border:0;border-radius:8px;background:var(--pink);color:#fff;
+  padding:8px 11px;font-weight:700;font-size:11px;cursor:pointer}
+.camera-note{font-size:10px;color:#6f5443;margin:7px 0 0}
+.film-output{margin-top:10px;display:none;background:#c8aa88;padding:10px 10px 24px;
+  border-radius:2px;box-shadow:0 7px 18px rgba(78,51,34,.22)}
+.film-output img{width:100%;display:block;border:7px solid #eee2d3;border-bottom-width:25px}
+.film-label{font-size:9px;color:#654936;text-align:center;margin-top:5px;letter-spacing:.08em}
+
+footer{text-align:center;color:var(--sub);font-size:12px;padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>/ little film booth</h1>
+  <p class="sub">Take a picture with your camera and turn it into a cute brown instant-film print.</p>
+
+  <article class="project">
+    <div class="camera">
+      <video id="cameraVideo" autoplay playsinline></video>
+      <canvas id="cameraCanvas"></canvas>
+      <div class="camera-controls">
+        <button class="camera-btn" id="startCamera">open camera</button>
+        <button class="camera-btn" id="snapPhoto">take photo</button>
+      </div>
+      <p class="camera-note">Camera access stays in your browser — no upload or backend.</p>
+      <div class="film-output" id="filmOutput">
+        <img id="filmImage" alt="Your instant-film photo">
+        <div class="film-label">MY LITTLE FILM • 2026</div>
+      </div>
+    </div>
+  </article>
+</div>
+<footer>Built and designed by hmieu</footer>
+
+<script>
+const video=document.getElementById('cameraVideo'),canvas=document.getElementById('cameraCanvas'),
+      filmOutput=document.getElementById('filmOutput'),filmImage=document.getElementById('filmImage');
+let stream=null;
+document.getElementById('startCamera').addEventListener('click',async()=>{
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    video.srcObject=stream; video.style.display='block';
+  }catch(e){
+    filmOutput.style.display='block'; filmImage.alt='Camera permission was not granted.';
+    filmImage.style.display='none';
+    document.querySelector('.camera-note').textContent='Camera permission was not granted. Try again in a browser that allows camera access.';
+  }
+});
+document.getElementById('snapPhoto').addEventListener('click',()=>{
+  if(!stream||video.readyState<2)return;
+  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  const ctx=canvas.getContext('2d');
+  ctx.save(); ctx.translate(canvas.width,0); ctx.scale(-1,1);
+  ctx.drawImage(video,0,0,canvas.width,canvas.height); ctx.restore();
+  filmImage.src=canvas.toDataURL('image/jpeg',.9);
+  filmImage.style.display='block'; filmOutput.style.display='block';
+});
+window.addEventListener('beforeunload',()=>stream&&stream.getTracks().forEach(t=>t.stop()));
+</script>
+</body>
+</html>
